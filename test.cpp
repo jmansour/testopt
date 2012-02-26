@@ -6,13 +6,14 @@
 using namespace cv;
 using namespace std;
 
-#include "DenseOF.h"
+#include "SimpleFlowDenseOF.h"
 
 int main( int argc, char** argv )
 {
-   if( argc < 3 ){
+   unsigned numImages = argc - 1;
+   if( numImages < 2 ){
       cout << "You must provide at least two images! Fool!" << endl;
-      exit;
+      exit(1);
    }
    char* inputImageNames[argc-1];
    for (int ii=0; ii<argc-1; ii++)
@@ -22,7 +23,7 @@ int main( int argc, char** argv )
    for (int ii=0; ii<argc-1; ii++)
       inputImages.push_back( imread(inputImageNames[ii]) );
 
-   DenseOF testEmptyOF;
+   SimpleFlowDenseOF testEmptyOF;
    testEmptyOF.setImages( inputImages );
 
    vector<Mat> &inputImages2 = testEmptyOF.getImages();
