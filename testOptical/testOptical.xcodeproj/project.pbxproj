@@ -1,0 +1,162 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		BE34AFC414F6D38A00EA4D3E /* test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = test.cpp; path = ../test.cpp; sourceTree = "<group>"; };
+		BE87F40D14F24E1D009841C4 /* DenseOF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DenseOF.cpp; path = ../DenseOF.cpp; sourceTree = "<group>"; };
+		BE87F40E14F24E1D009841C4 /* DenseOF.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DenseOF.h; path = ../DenseOF.h; sourceTree = "<group>"; };
+		BEC76B3414F9B6F7006C8E44 /* SimpleFlowDenseOF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SimpleFlowDenseOF.cpp; path = ../SimpleFlowDenseOF.cpp; sourceTree = "<group>"; };
+		BEC76B3514F9B82B006C8E44 /* SimpleFlowDenseOF.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SimpleFlowDenseOF.h; path = ../SimpleFlowDenseOF.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		BE87F40114F24E06009841C4 = {
+			isa = PBXGroup;
+			children = (
+				BEC76B3414F9B6F7006C8E44 /* SimpleFlowDenseOF.cpp */,
+				BEC76B3514F9B82B006C8E44 /* SimpleFlowDenseOF.h */,
+				BE34AFC414F6D38A00EA4D3E /* test.cpp */,
+				BE87F40D14F24E1D009841C4 /* DenseOF.cpp */,
+				BE87F40E14F24E1D009841C4 /* DenseOF.h */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		BECAAAB7151D250300DD019B /* SimpleFlow */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = BECAAAB8151D250300DD019B /* Build configuration list for PBXLegacyTarget "SimpleFlow" */;
+			buildPhases = (
+			);
+			buildToolPath = /Volumes/boxpuff/projects/current/sprites/testopticalflow/xcodemake.sh;
+			buildWorkingDirectory = /Volumes/boxpuff/projects/current/sprites/testopticalflow/;
+			dependencies = (
+			);
+			name = SimpleFlow;
+			passBuildSettingsInEnvironment = 0;
+			productName = SimpleFlow;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		BE87F40314F24E06009841C4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+				ORGANIZATIONNAME = "monash university";
+			};
+			buildConfigurationList = BE87F40614F24E06009841C4 /* Build configuration list for PBXProject "testOptical" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = BE87F40114F24E06009841C4;
+			productRefGroup = BE87F40114F24E06009841C4;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BECAAAB7151D250300DD019B /* SimpleFlow */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		BE87F40814F24E06009841C4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		BE87F40914F24E06009841C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		BECAAAB9151D250300DD019B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		BECAAABA151D250300DD019B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BE87F40614F24E06009841C4 /* Build configuration list for PBXProject "testOptical" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BE87F40814F24E06009841C4 /* Debug */,
+				BE87F40914F24E06009841C4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BECAAAB8151D250300DD019B /* Build configuration list for PBXLegacyTarget "SimpleFlow" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BECAAAB9151D250300DD019B /* Debug */,
+				BECAAABA151D250300DD019B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BE87F40314F24E06009841C4 /* Project object */;
+}
