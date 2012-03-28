@@ -11,7 +11,7 @@ public:
    void releaseImages()                             { images = NULL; };
    void setPyramidLevels( const int levels )        { numPyramidLevels = levels; };
    int  getPyramidLevels() const                    { return numPyramidLevels; };
-   virtual bool calcFlow( Mat &resultImage, Mat *resultImageScale ) =0;
+   virtual bool calcFlow( Mat &resultImage ) =0;
 protected:
    vector<Mat> * images;
    int numImages;                // reference to set of images

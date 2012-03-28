@@ -35,8 +35,8 @@
 			buildConfigurationList = BECAAAB8151D250300DD019B /* Build configuration list for PBXLegacyTarget "SimpleFlow" */;
 			buildPhases = (
 			);
-			buildToolPath = /Volumes/boxpuff/projects/current/sprites/testopticalflow/xcodemake.sh;
-			buildWorkingDirectory = /Volumes/boxpuff/projects/current/sprites/testopticalflow/;
+			buildToolPath = /Users/jmansour/spriteslocal/testopticalflow/xcodemake.sh;
+			buildWorkingDirectory = /Users/jmansour/spriteslocal/testopticalflow/;
 			dependencies = (
 			);
 			name = SimpleFlow;
