@@ -15,6 +15,6 @@ public:
 protected:
    vector<Mat> * images;
    int numImages;                // reference to set of images
-   unsigned numPyramidLevels;   
+   unsigned numPyramidLevels;
 };
 

@@ -8,11 +8,18 @@ public:
    SimpleFlowDenseOF()                              { setOmegaRadius(0); setetaRadius(0); } ;
    ~SimpleFlowDenseOF()                             {};
    bool calcFlow( Mat &resultImage );
-   void setOmegaRadius( const unsigned OmRadius ) { OmegaRadius = OmRadius; };
+   void setOmegaRadius( const unsigned OmRadius ) { OmegaRadius = OmRadius; OmegaPixelCount = (2*OmRadius+1)*(2*OmRadius+1);};
    void setetaRadius( const unsigned etRadius ) { etaRadius = etRadius; };
+   void setsigma_d( const float sigma_d_in ) { sigma_d = sigma_d_in; assert(sigma_d > 0); };
+   void setsigma_c( const float sigma_c_in ) { sigma_c = sigma_c_in; assert(sigma_c > 0); };
 private:
-   bool calcFlowAtLevel( Mat &fromImage, Mat &toImage, Mat &initFlow, Mat &levelResult );
-   bool calcNormsWithMean( Mat &fromImage, Mat &toImage, Mat &initFlow, Mat &norms );
+   bool calcFlowAtLevel( Mat &fromImage, Mat &toImage, Mat &currentFlow, Mat &newFlow );
+   bool calcNormsWithMean( Mat &fromImage, Mat &toImage, Mat &currentFlow, Mat &norms );
+   bool filterThenFindEnergyMinimiser( Mat &fromImage, Mat &norms, Mat &currentFlow, Mat &newFlow );
    unsigned OmegaRadius;
+   unsigned OmegaPixelCount;
    unsigned etaRadius;
+   unsigned etaPixelCount;
+   float sigma_d;
+   float sigma_c;
 };
