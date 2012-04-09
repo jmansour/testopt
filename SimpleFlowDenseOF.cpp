@@ -32,8 +32,9 @@ bool SimpleFlowDenseOF::calcFlow( Mat &resultImage ){
       currentFlow[ii] = Mat( image0Pyramid[numPyramidLevels].rows, image0Pyramid[numPyramidLevels].cols, CV_32SC2 );
           newFlow[ii] = Mat( image0Pyramid[numPyramidLevels].rows, image0Pyramid[numPyramidLevels].cols, CV_32SC2 );
    }
+   createMapping();
    // run flow at top (smallest) pyramid level 
-   currentFlow[numPyramidLevels] = Mat::zeros(currentFlow[numPyramidLevels].rows, currentFlow[numPyramidLevels].cols, CV_32SC2 );   // init top to zero
+   currentFlow[numPyramidLevels] = Mat::zeros(currentFlow[numPyramidLevels].rows, currentFlow[numPyramidLevels].cols, CV_32SC2 );   // init top level to zero
    calcFlowAtLevel( image0Pyramid[numPyramidLevels], image1Pyramid[numPyramidLevels], currentFlow[numPyramidLevels], newFlow[numPyramidLevels] );
    for (int ii = numPyramidLevels-1; ii>=0; ii--) {
       newFlow[ii+1] = 2*newFlow[ii+1];    // multiply by two to prepare for new image scaling
@@ -82,14 +83,11 @@ bool SimpleFlowDenseOF::calcNormsWithMean( Mat &fromImage, Mat &toImage, Mat &cu
    // build offset vec (prob should do somewhere else)
    int OmegaRadiusInt = (int) OmegaRadius;
    int offsets1D[OmegaPixelCount];
-   int vecy[OmegaPixelCount], vecx[OmegaPixelCount];
    
    unsigned posCount = 0;
    for (int ii=-OmegaRadiusInt; ii<=OmegaRadiusInt; ii++) {
       for (int jj=-OmegaRadiusInt; jj<=OmegaRadiusInt; jj++) {
          offsets1D[posCount] = ii*toImage.step + jj*toImage.channels();
-         vecy[posCount] = ii;
-         vecx[posCount] = jj;
          posCount++;
       }
    }
@@ -124,11 +122,11 @@ bool SimpleFlowDenseOF::calcNormsWithMean( Mat &fromImage, Mat &toImage, Mat &cu
             }
          } else {                                                                            // bounds checks required here
             for (unsigned aa=0; aa<OmegaPixelCount; aa++) {
-               int iiPix = iiOm + vecy[aa];
+               int iiPix = iiOm + vecyOmega[aa];
                if (iiPix < 0 || iiPix >= toImage.rows){                                      // if outside image vertically, set to FLT_MAX
                   *normPix = FLT_MAX;
                } else {
-                  int jjPix = jjOm + vecx[aa];
+                  int jjPix = jjOm + vecxOmega[aa];
                   if (jjPix < 0 || jjPix >= toImage.cols){                                   // if outside image horizontally, set to FLT_MAX
                      *normPix = FLT_MAX;
                   } else {                                                                   // else calc norm
@@ -159,48 +157,130 @@ bool SimpleFlowDenseOF::filterThenFindEnergyMinimiser( Mat &fromImage, Mat &norm
    assert( currentFlow.elemSize() == newFlow.elemSize() );
    
    // calculate Mat containing pixel displacement factor
-   Mat dispFact(2*etaRadius+1,    2*etaRadius+1, CV_32FC1);
-   Mat dispOffsets(2*etaRadius+1, 2*etaRadius+1, CV_32SC1);
-   // get pointer to image centre pixel
-   assert(0) // double check the .step result
-   float*        dispCentrePix =    (float*)dispFact.data + etaRadius*dispFact.step    + etaRadius;
-   int*   dispOffsetsCentrePix =   (int*)dispOffsets.data + etaRadius*dispOffsets.step + etaRadius;
-   for (int ii = -etaRadius; ii<=etaRadius; ii++) {
-      for (int jj = -etaRadius; jj<=etaRadius; jj++) {
-         ii*dispFact.step    + jj + dispCentrePix        = exp(-pow((ii*ii + jj*jj),2)/(2*sigma_d));
-         ii*dispOffsets.step + jj + dispOffsetsCentrePix = ii*fromImage.step + jj*fromImage.channels();
+   int etaRadiusInt = (int) etaRadius;
+   float dispFact[etaPixelCount];
+   int dispOffset[etaPixelCount];
+   
+   unsigned posCount=0;
+   for (int ii = -etaRadiusInt; ii<=etaRadiusInt; ii++) {
+      for (int jj = -etaRadiusInt; jj<=etaRadiusInt; jj++) {
+         dispFact[posCount] = exp(-(ii*ii + jj*jj)/(2*sigma_d));
+         dispOffset[posCount] = ii*fromImage.step + jj*fromImage.channels();
+         posCount++;
       }
    }
+   assert(posCount == etaPixelCount);
    
    // go through all pixels of levelResult, set pixel to direction which minimises energy
    for (int ii=0; ii<newFlow.rows; ii++) {
 
       const uchar*      fImgRowPtr = fromImage.ptr<uchar>(ii);
-      const float*     normsRowPtr = norms.ptr<float>(ii);
-      const int*     newFlowRowPtr = newFlow.ptr<int>(ii);
       const int* currentFlowRowPtr = currentFlow.ptr<int>(ii);
+      int*     newFlowRowPtr = newFlow.ptr<int>(ii);
 
       for (int jj=0; jj<newFlow.cols; jj++) {
 
          const uchar*  fImgPix     = fImgRowPtr        + jj*fromImage.channels();                          // get fromImage pixel
-         const float* normsPix     = normsRowPtr       + jj*norms.channels();                              // get norms pixel
-         const int* currentFlowPix = currentFlowRowPtr + jj*currentFlow.channels();                        // get currentFlow pixel
-         const int* newFlowPix     = newFlowRowPtr     + jj*newFlow.channels();                            // get newFlow pixel
          
          // perform a bilateral filter for each candidate vector over neighbouring pixels to (ii,jj), ie all pixels in Eta
-         // first calculate colour different factor for all pixels in eta
-         for (int ll=-etaRadius; ll<=etaRadius; ll++) {
-            for(int mm=-etaRadius; mm<=etaRadius; mm++) {
-               
+         // first calculate colour difference factor for all pixels in eta, and also check bounds and create new list
+         float incTotFact[etaPixelCount];    // total bilateral factor (disp + colourFact) for included pixels
+         int etaPosy[etaPixelCount];
+         int etaPosx[etaPixelCount];
+
+         unsigned incPosCount = 0;                // included pixels increment                    
+         for (unsigned aa=0; aa<etaPixelCount; aa++) {
+            int testPosy = ii+vecyeta[aa];
+            int testPosx = jj+vecxeta[aa];
+            if ( (testPosy >= 0) && (testPosy < fromImage.rows) && 
+                 (testPosx >= 0) && (testPosx < fromImage.cols) ) {
+               etaPosy[incPosCount] = testPosy;
+               etaPosx[incPosCount] = testPosx;
+               const uchar* fImgOtherPix = fImgPix + dispOffset[aa];
+               float colDiffNorm2 = 0;
+               for (int bb = 0; bb<fromImage.channels(); bb++ ) {
+                  float diff = (float)(*(fImgPix+bb) - *(fImgOtherPix+bb));
+                  colDiffNorm2 += diff*diff; 
+               }
+               incTotFact[incPosCount] = dispFact[aa] * exp(-colDiffNorm2/(2*sigma_c));
+               incPosCount++;
             }
          }
-         // now, need to go through each candidate vector in Omega, and assign an energy (perhaps should normalise for vecors with less contributions (at boundaries))
+         assert(incPosCount <= etaPixelCount);
+
+         const int* currentFlowPix = currentFlowRowPtr + jj*currentFlow.channels();                        // get currentFlow pixel
+         int* currentFlowOtherPixTop = (int*)currentFlow.data;
+         int* mapto1DOmegaTop = (int*)mapto1DOmega.data;
+         float* normsTop = (float*)norms.data;
+         // now, need to go through each candidate vector in Omega, and assign an energy (perhaps should normalise for vectors with less contributions (at boundaries))
+         float bilateralSumMin = FLT_MAX;
+         int winnerVectorIndex = -1;
+         for (unsigned Omega_i; Omega_i<OmegaPixelCount; Omega_i++) {
+            float bilateralSum = 0;
+            for (unsigned eta_i; eta_i<incPosCount; eta_i++) {
+               // need to determine normsOtherPix
+               int* currentFlowOtherPix = currentFlowOtherPixTop + etaPosy[eta_i]*currentFlow.step + etaPosx[eta_i]*currentFlow.channels();
+               int correctedOffsety = *currentFlowPix - *currentFlowOtherPix;
+               int correctedOffsetx = *(currentFlowPix+1) - *(currentFlowOtherPix+1);
+               if( (abs(correctedOffsety) > (int)OmegaRadius) || (abs(correctedOffsetx) > (int)OmegaRadius) ) // if outside Omega support, no contribution
+                  continue;
+               int requiredNormsChannel = *(mapto1DOmegaTop + (correctedOffsety+OmegaRadius)*mapto1DOmega.step + 
+                                                              (correctedOffsetx+OmegaRadius));
+               float normsVal = *(normsTop + etaPosy[eta_i]*norms.step + etaPosx[eta_i]*norms.channels() + requiredNormsChannel);
+               bilateralSum += normsVal*incTotFact[eta_i];
+               if( bilateralSum < bilateralSumMin ) {
+                  bilateralSumMin = bilateralSum;
+                  winnerVectorIndex = Omega_i;
+               }
+            }
+         }
          
-         
+         int* newFlowPix = newFlowRowPtr + jj*newFlow.channels();         // get newFlow pixel
+         *(newFlowPix  ) = *(currentFlowPix  ) + vecyOmega[winnerVectorIndex];  // set value to current approximation, plus best candidate from omega;
+         *(newFlowPix+1) = *(currentFlowPix+1) + vecxOmega[winnerVectorIndex];
       }
    }
    return 1;
    
 }
+
+void SimpleFlowDenseOF::createMapping(){
+
+   // create mapping for omega support
+   mapto1DOmega = Mat(2*OmegaRadius+1, 2*OmegaRadius+1, CV_32SC1);
+   int OmegaRadiusInt = (int)OmegaRadius;
+   unsigned posCount = 0; 
+   for (int aa = -OmegaRadiusInt; aa<=OmegaRadiusInt; aa++) {
+      for (int bb = -OmegaRadiusInt; bb<=OmegaRadiusInt; bb++) {
+         vecyOmega.push_back(aa);
+         vecxOmega.push_back(bb);
+         mapto1DOmega.at<int>(aa+OmegaRadius,bb+OmegaRadius) = posCount;
+         posCount++;
+      }
+   }
+   assert(posCount == (2*OmegaRadius+1)*(2*OmegaRadius+1));
+
+   // create mapping for eta basis   
+   mapto1Deta = Mat(2*etaRadius+1, 2*etaRadius+1, CV_32SC1);
+   int etaRadiusInt = (int)etaRadius;
+   posCount = 0; 
+   for (int aa = -etaRadiusInt; aa<=etaRadiusInt; aa++) {
+      for (int bb = -etaRadiusInt; bb<=etaRadiusInt; bb++) {
+         vecyeta.push_back(aa);
+         vecxeta.push_back(bb);
+         mapto1Deta.at<int>(aa+etaRadius,bb+etaRadius) = posCount;
+         posCount++;
+      }
+   }
+   assert(posCount == (2*etaRadius+1)*(2*etaRadius+1));
+   
+}
+
+
+
+
+
+
+
 
 
