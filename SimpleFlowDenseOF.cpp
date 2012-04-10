@@ -29,12 +29,12 @@ bool SimpleFlowDenseOF::calcFlow( Mat &resultImage ){
    Mat     newFlow[numPyramidLevels+1];
    // create Mats for the current level solution
    for (unsigned ii = 0; ii<=numPyramidLevels; ii++) {
-      currentFlow[ii] = Mat( image0Pyramid[numPyramidLevels].rows, image0Pyramid[numPyramidLevels].cols, CV_32SC2 );
-          newFlow[ii] = Mat( image0Pyramid[numPyramidLevels].rows, image0Pyramid[numPyramidLevels].cols, CV_32SC2 );
+      currentFlow[ii] = Mat( image0Pyramid[ii].rows, image0Pyramid[ii].cols, CV_16SC2 );
+          newFlow[ii] = Mat( image0Pyramid[ii].rows, image0Pyramid[ii].cols, CV_16SC2 );
    }
    createMapping();
    // run flow at top (smallest) pyramid level 
-   currentFlow[numPyramidLevels] = Mat::zeros(currentFlow[numPyramidLevels].rows, currentFlow[numPyramidLevels].cols, CV_32SC2 );   // init top level to zero
+   currentFlow[numPyramidLevels] = Mat::zeros(currentFlow[numPyramidLevels].rows, currentFlow[numPyramidLevels].cols, CV_16SC2 );   // init top level to zero
    calcFlowAtLevel( image0Pyramid[numPyramidLevels], image1Pyramid[numPyramidLevels], currentFlow[numPyramidLevels], newFlow[numPyramidLevels] );
    for (int ii = numPyramidLevels-1; ii>=0; ii--) {
       newFlow[ii+1] = 2*newFlow[ii+1];    // multiply by two to prepare for new image scaling
@@ -95,15 +95,15 @@ bool SimpleFlowDenseOF::calcNormsWithMean( Mat &fromImage, Mat &toImage, Mat &cu
    // go through all pixels of fromImage, determine norms
    for (int ii=0; ii<fromImage.rows; ii++) {
       
-      const uchar*      fImgRowPtr = fromImage.ptr<uchar>(ii);
-      float*            normRowPtr =     norms.ptr<float>(ii);
-      const int* currentFlowRowPtr = currentFlow.ptr<int>(ii);
+      const uchar*        fImgRowPtr =   fromImage.ptr<uchar>(ii);
+      float*              normRowPtr =       norms.ptr<float>(ii);
+      const short* currentFlowRowPtr = currentFlow.ptr<short>(ii);
  
       for (int jj=0; jj<fromImage.cols; jj++) {
          
-         const uchar*      fImgPix =        fImgRowPtr +   fromImage.channels()*jj;          // get fromImage pixel
-         float*            normPix =        normRowPtr +       norms.channels()*jj;          // get norm pixel
-         const int* currentFlowPix = currentFlowRowPtr + currentFlow.channels()*jj;          // get currentFlow displacement
+         const uchar*        fImgPix =        fImgRowPtr +   fromImage.channels()*jj;          // get fromImage pixel
+         float*              normPix =        normRowPtr +       norms.channels()*jj;          // get norm pixel
+         const short* currentFlowPix = currentFlowRowPtr + currentFlow.channels()*jj;          // get currentFlow displacement
 
          int iiOm = ii + currentFlowPix[0];                                                  // get centre of Omega
          int jjOm = jj + currentFlowPix[1];
@@ -174,9 +174,9 @@ bool SimpleFlowDenseOF::filterThenFindEnergyMinimiser( Mat &fromImage, Mat &norm
    // go through all pixels of levelResult, set pixel to direction which minimises energy
    for (int ii=0; ii<newFlow.rows; ii++) {
 
-      const uchar*      fImgRowPtr = fromImage.ptr<uchar>(ii);
-      const int* currentFlowRowPtr = currentFlow.ptr<int>(ii);
-      int*     newFlowRowPtr = newFlow.ptr<int>(ii);
+      const uchar*        fImgRowPtr = fromImage.ptr<uchar>(ii);
+      const short* currentFlowRowPtr = currentFlow.ptr<short>(ii);
+      short*           newFlowRowPtr =     newFlow.ptr<short>(ii);
 
       for (int jj=0; jj<newFlow.cols; jj++) {
 
@@ -208,8 +208,8 @@ bool SimpleFlowDenseOF::filterThenFindEnergyMinimiser( Mat &fromImage, Mat &norm
          }
          assert(incPosCount <= etaPixelCount);
 
-         const int* currentFlowPix = currentFlowRowPtr + jj*currentFlow.channels();                        // get currentFlow pixel
-         int* currentFlowOtherPixTop = (int*)currentFlow.data;
+         const short* currentFlowPix = currentFlowRowPtr + jj*currentFlow.channels();                        // get currentFlow pixel
+         short* currentFlowOtherPixTop = (short*)currentFlow.data;
          int* mapto1DOmegaTop = (int*)mapto1DOmega.data;
          float* normsTop = (float*)norms.data;
          // now, need to go through each candidate vector in Omega, and assign an energy (perhaps should normalise for vectors with less contributions (at boundaries))
@@ -219,7 +219,7 @@ bool SimpleFlowDenseOF::filterThenFindEnergyMinimiser( Mat &fromImage, Mat &norm
             float bilateralSum = 0;
             for (unsigned eta_i; eta_i<incPosCount; eta_i++) {
                // need to determine normsOtherPix
-               int* currentFlowOtherPix = currentFlowOtherPixTop + etaPosy[eta_i]*currentFlow.step + etaPosx[eta_i]*currentFlow.channels();
+               short* currentFlowOtherPix = currentFlowOtherPixTop + etaPosy[eta_i]*currentFlow.step + etaPosx[eta_i]*currentFlow.channels();
                int correctedOffsety = *currentFlowPix - *currentFlowOtherPix;
                int correctedOffsetx = *(currentFlowPix+1) - *(currentFlowOtherPix+1);
                if( (abs(correctedOffsety) > (int)OmegaRadius) || (abs(correctedOffsetx) > (int)OmegaRadius) ) // if outside Omega support, no contribution
@@ -235,9 +235,9 @@ bool SimpleFlowDenseOF::filterThenFindEnergyMinimiser( Mat &fromImage, Mat &norm
             }
          }
          
-         int* newFlowPix = newFlowRowPtr + jj*newFlow.channels();         // get newFlow pixel
-         *(newFlowPix  ) = *(currentFlowPix  ) + vecyOmega[winnerVectorIndex];  // set value to current approximation, plus best candidate from omega;
-         *(newFlowPix+1) = *(currentFlowPix+1) + vecxOmega[winnerVectorIndex];
+         short* newFlowPix = newFlowRowPtr + jj*newFlow.channels();         // get newFlow pixel
+         *(newFlowPix  )   = *(currentFlowPix  ) + vecyOmega[winnerVectorIndex];  // set value to current approximation, plus best candidate from omega;
+         *(newFlowPix+1)   = *(currentFlowPix+1) + vecxOmega[winnerVectorIndex];
       }
    }
    return 1;
